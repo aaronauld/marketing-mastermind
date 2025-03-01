@@ -21,6 +21,7 @@ type QuizContextType = {
     setScore: (score: number) => void
     totalQuestions: number
     weeklyQuestions: any[] // Replace 'any' with your actual question type
+    restartQuiz: () => void
 }
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined)
@@ -39,18 +40,23 @@ export function QuizController({ children }: { children: ReactNode }) {
     const [isQuizFinished, setIsQuizFinished] = useState(false)
     const [isSoundOn, setIsSoundOn] = useState(true)
     const [score, setScore] = useState(0)
-    const [weeklyQuestions, setWeeklyQuestions] = useState<any[]>([]) // Replace 'any' with your actual question type
+    const [weeklyQuestions, setWeeklyQuestions] = useState<any[]>([])
     const router = useRouter()
     const [showQuestionForm, setShowQuestionForm] = useState(false)
     const [showChallengeForm, setShowChallengeForm] = useState(false)
     const [showLeaderboard, setShowLeaderboard] = useState(false)
     const { data: session, status } = useSession()
 
+    // Load questions on mount
     useEffect(() => {
-        setWeeklyQuestions(getWeeklyQuestions())
+        const questions = getWeeklyQuestions()
+        setWeeklyQuestions(questions)
     }, [])
 
+    // Countdown timer logic
     useEffect(() => {
+        if (isQuizFinished || timeLeft === 0) return
+
         const timer = setInterval(() => {
             setTimeLeft((prevTime) => {
                 if (prevTime <= 1) {
@@ -63,43 +69,34 @@ export function QuizController({ children }: { children: ReactNode }) {
         }, 1000)
 
         return () => clearInterval(timer)
-    }, [])
+    }, [timeLeft, isQuizFinished])
 
+    // Handle answer selection
     const checkAnswer = (selectedIndex: number) => {
-        const isCorrect = weeklyQuestions[currentQuestion].a[selectedIndex].correct
+        if (!weeklyQuestions[currentQuestion]) return false
+        const isCorrect = weeklyQuestions[currentQuestion].a[selectedIndex]?.correct
         if (isCorrect) {
             setScore((prevScore) => prevScore + 1)
         }
         return isCorrect
     }
 
+    // Move to the next question
     const nextQuestion = () => {
         if (currentQuestion < weeklyQuestions.length - 1) {
-            setCurrentQuestion(currentQuestion + 1)
+            setCurrentQuestion((prev) => prev + 1)
         } else {
             setIsQuizFinished(true)
         }
     }
 
+    // Restart the quiz
     const restartQuiz = () => {
         setCurrentQuestion(0)
         setTimeLeft(60)
         setIsQuizFinished(false)
         setScore(0)
-        router.push("/quiz/question/1")
-    }
-
-    const toggleSound = () => {
-        setIsSoundOn(!isSoundOn)
-        // Here you would implement the actual sound toggling logic
-    }
-
-    const openLeaderboard = () => {
-        setShowLeaderboard(true)
-    }
-
-    const postQuestion = () => {
-        setShowQuestionForm(true)
+        router.push("/quiz")
     }
 
     const handleQuestionSubmit = (formData: QuestionFormData) => {
@@ -107,10 +104,6 @@ export function QuizController({ children }: { children: ReactNode }) {
         console.log("Submitted question:", formData)
         setShowQuestionForm(false)
         // Optionally, show a success message to the user
-    }
-
-    const challengeFriends = () => {
-        setShowChallengeForm(true)
     }
 
     const handleChallengeFriends = (email: string) => {
@@ -122,46 +115,45 @@ export function QuizController({ children }: { children: ReactNode }) {
         // Optionally, show a success message to the user
     }
 
-    const submitScore = async () => {
-        if (status !== "authenticated" || !session?.user?.id) {
-            console.error("User not authenticated")
-            return
-        }
-
-        try {
-            const response = await fetch("/api/scores/submit", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ score, time: 60 - timeLeft }),
-            })
-            const data = await response.json()
-            if (response.ok) {
-                console.log("Score submitted successfully")
-                setShowLeaderboard(true)
-            } else {
-                console.error("Error submitting score:", data.error)
-            }
-        } catch (error) {
-            console.error("Error submitting score:", error)
-        }
-    }
-
+    // Submit score when quiz is finished
     useEffect(() => {
         if (isQuizFinished) {
             submitScore()
         }
     }, [isQuizFinished])
 
-    if (status === "loading") {
-        return <div>Loading...</div>
+    const submitScore = async () => {
+        if (status !== "authenticated" || !session?.user?.id) {
+            console.error("User not authenticated", { status, session })
+            return
+        }
+
+        try {
+            const response = await fetch("/api/scores/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ score, time: 60 - timeLeft }),
+                credentials: "include",
+            })
+
+            if (response.ok) {
+                setShowLeaderboard(true)
+            } else {
+                console.error("Error submitting score:", await response.json())
+            }
+        } catch (error) {
+            console.error("Error submitting score:", error)
+        }
     }
 
-    if (status === "unauthenticated") {
-        router.push("/auth/signin")
-        return null
-    }
+    // Handle authentication
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/auth/signin")
+        }
+    }, [status, router])
+
+    if (status === "loading") return <div>Loading...</div>
 
     return (
         <QuizContext.Provider
@@ -176,19 +168,17 @@ export function QuizController({ children }: { children: ReactNode }) {
                 setScore,
                 totalQuestions: weeklyQuestions.length,
                 weeklyQuestions,
+                restartQuiz,
             }}
         >
-            <div className="relative w-full h-[calc(100vh-4rem)] bg-gray-100">
-                {/* Quiz Window */}
+            <div className="relative w-full h-[calc(100vh-15rem)] bg-gray-100">
                 <div className="absolute top-4 right-4 w-2/3 h-2/3 bg-white shadow-lg rounded-lg overflow-hidden">
-                    {/* Question Counter - Top Left */}
                     <div className="absolute top-2 left-2 bg-gray-100 p-2 rounded shadow">
                         <div className="text-sm font-bold">
                             Question {currentQuestion + 1} of {weeklyQuestions.length}
                         </div>
                     </div>
 
-                    {/* Timer - Top Right */}
                     <div className="absolute top-2 right-2 bg-gray-100 p-2 rounded shadow">
                         <div className="text-sm">Time left: {timeLeft}s</div>
                     </div>
@@ -196,34 +186,17 @@ export function QuizController({ children }: { children: ReactNode }) {
                     <div className="p-6 pt-14 h-full overflow-y-auto">{children}</div>
                 </div>
 
-                {/* External Buttons */}
                 <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-                    <Button onClick={openLeaderboard} className="flex-1">
-                        <Trophy className="mr-2 h-4 w-4" /> Leaderboard
-                    </Button>
-                    <Button onClick={postQuestion} className="flex-1">
-                        <MessageSquarePlus className="mr-2 h-4 w-4" /> Post a Question
-                    </Button>
-                    <Button onClick={challengeFriends} className="flex-1">
-                        <Share2 className="mr-2 h-4 w-4" /> Challenge Friends
-                    </Button>
-                    <Button onClick={toggleSound} className="flex-1">
-                        {isSoundOn ? <Volume2 className="mr-2 h-4 w-4" /> : <VolumeX className="mr-2 h-4 w-4" />}
-                        Sound {isSoundOn ? "On" : "Off"}
-                    </Button>
+                    <Button onClick={() => setShowLeaderboard(true)}><Trophy /> Leaderboard</Button>
+                    <Button onClick={() => setShowQuestionForm(true)}><MessageSquarePlus /> Post a Question</Button>
+                    <Button onClick={() => setShowChallengeForm(true)}><Share2 /> Challenge Friends</Button>
+                    <Button onClick={() => setIsSoundOn(!isSoundOn)}>{isSoundOn ? <Volume2 /> : <VolumeX />} Sound</Button>
                 </div>
 
-                {showQuestionForm && (
-                    <QuestionForm onClose={() => setShowQuestionForm(false)} onSubmit={handleQuestionSubmit} />
-                )}
-
-                {showChallengeForm && (
-                    <ChallengeFriendsForm onClose={() => setShowChallengeForm(false)} onSubmit={handleChallengeFriends} />
-                )}
-
+                {showQuestionForm && <QuestionForm onClose={() => setShowQuestionForm(false)} onSubmit={handleQuestionSubmit} />}
+                {showChallengeForm && <ChallengeFriendsForm onClose={() => setShowChallengeForm(false)} onSubmit={handleChallengeFriends} />}
                 {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} />}
             </div>
         </QuizContext.Provider>
     )
 }
-

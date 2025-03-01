@@ -3,6 +3,11 @@ import type { NextRequest } from "next/server"
 import * as jwt from "jsonwebtoken"
 
 export function middleware(request: NextRequest) {
+    // Remove any authentication checks for the score submission route
+    if (request.nextUrl.pathname === "/api/scores/submit") {
+        return NextResponse.next()
+    }
+
     const token = request.headers.get("Authorization")?.split(" ")[1]
 
     if (!token) {
@@ -25,6 +30,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/api/scores/submit"],
+    matcher: ["/api/:path*"],
 }
 

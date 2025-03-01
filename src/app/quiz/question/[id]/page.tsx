@@ -10,7 +10,7 @@ export default function QuestionPage() {
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
     const [isAnswered, setIsAnswered] = useState(false)
     const [isCorrect, setIsCorrect] = useState(false)
-    const { currentQuestion, checkAnswer, nextQuestion, isQuizFinished, score, totalQuestions, weeklyQuestions } =
+    const { currentQuestion, checkAnswer, nextQuestion, isQuizFinished, score, totalQuestions, weeklyQuestions, restartQuiz } =
         useQuiz()
     const { status } = useSession()
     const router = useRouter()
@@ -59,7 +59,14 @@ export default function QuestionPage() {
                     Your Score: {score} / {totalQuestions}
                 </p>
                 <p className="text-lg mb-6">Level: {getLevel(score, totalQuestions)}</p>
-                <Button onClick={() => router.push("/quiz/start")}>Try Again</Button>
+                <Button
+                    onClick={() => {
+                        restartQuiz() // Reset quiz state before navigating
+                        router.push("/quiz/start")
+                    }}
+                >
+                    Try Again
+                </Button>
             </div>
         )
     }

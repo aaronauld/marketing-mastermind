@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -24,7 +26,7 @@ export default function SignIn() {
         if (result?.error) {
             console.error(result.error)
         } else {
-            router.push("/quiz/start")
+            router.push("/") // Redirect to home page after successful login
         }
     }
 

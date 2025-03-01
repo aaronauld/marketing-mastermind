@@ -1,7 +1,21 @@
-import Link from "next/link"
+"use client"
+
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export default function PlayNow() {
+    const { data: session, status } = useSession()
+    const router = useRouter()
+
+    const handleStartQuiz = () => {
+        if (session) {
+            router.push("/quiz/start")
+        } else {
+            router.push("/auth/register")
+        }
+    }
+
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-center mb-6">Welcome to Marketing Master Mind</h1>
@@ -18,9 +32,9 @@ export default function PlayNow() {
                 week.
             </p>
             <div className="flex justify-center">
-                <Link href="/auth/register">
-                    <Button size="lg">Register and Start Quiz</Button>
-                </Link>
+                <Button size="lg" onClick={handleStartQuiz}>
+                    {status === "loading" ? "Loading..." : session ? "Start Quiz" : "Register and Start Quiz"}
+                </Button>
             </div>
         </div>
     )
