@@ -29,8 +29,8 @@ export default function QuizStart() {
     }
 
     return (
-        <div className="h-full flex flex-col justify-center items-center">
-            <h1 className="text-3xl font-bold mb-6">Are you Australia's leading marketing mind?</h1>
+        <div className="flex flex-col justify-center items-center h-full">
+            <h1 className="text-3xl font-bold mb-6">Are you Australia&apos;s leading marketing mind?</h1>
             <p className="text-xl mb-8">10 questions - 60 seconds</p>
             {countdown > 0 ? (
                 <p className="text-6xl font-bold">{countdown}</p>

@@ -42,7 +42,7 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
                     <X className="h-4 w-4" />
                     <span className="sr-only">Close</span>
                 </Button>
-                <h2 className="text-2xl font-bold mb-4">This Week's Leaderboard</h2>
+                <h2 className="text-2xl font-bold mb-4">This Week&apos;s Leaderboard</h2>
                 <div className="space-y-2">
                     {leaderboardData.map((entry, index) => (
                         <div key={entry.id} className="flex justify-between items-center bg-gray-100 p-2 rounded">

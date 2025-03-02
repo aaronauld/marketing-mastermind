@@ -4,7 +4,7 @@ import { useState, useEffect, createContext, useContext, type ReactNode } from "
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Volume2, VolumeX, Trophy, MessageSquarePlus, Share2 } from "lucide-react"
+import { Volume2, VolumeX, Trophy, MessageSquarePlus, Share2, RotateCcw } from "lucide-react"
 import { getWeeklyQuestions } from "../lib/weeklyQuestions"
 import { QuestionForm, type QuestionFormData } from "../components/question-form"
 import { ChallengeFriendsForm } from "../components/challenge-friends-form"
@@ -96,7 +96,7 @@ export function QuizController({ children }: { children: ReactNode }) {
         setTimeLeft(60)
         setIsQuizFinished(false)
         setScore(0)
-        router.push("/quiz")
+        router.push("/quiz/start")
     }
 
     const handleQuestionSubmit = (formData: QuestionFormData) => {
@@ -172,7 +172,7 @@ export function QuizController({ children }: { children: ReactNode }) {
             }}
         >
             <div className="relative w-full h-[calc(100vh-15rem)] bg-gray-100">
-                <div className="absolute top-4 right-4 w-2/3 h-2/3 bg-white shadow-lg rounded-lg overflow-hidden">
+                <div className="absolute top-4 right-4 w-3/5 h-4/5 bg-white shadow-lg rounded-lg overflow-hidden">
                     <div className="absolute top-2 left-2 bg-gray-100 p-2 rounded shadow">
                         <div className="text-sm font-bold">
                             Question {currentQuestion + 1} of {weeklyQuestions.length}
@@ -186,12 +186,14 @@ export function QuizController({ children }: { children: ReactNode }) {
                     <div className="p-6 pt-14 h-full overflow-y-auto">{children}</div>
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-                    <Button onClick={() => setShowLeaderboard(true)}><Trophy /> Leaderboard</Button>
-                    <Button onClick={() => setShowQuestionForm(true)}><MessageSquarePlus /> Post a Question</Button>
-                    <Button onClick={() => setShowChallengeForm(true)}><Share2 /> Challenge Friends</Button>
-                    <Button onClick={() => setIsSoundOn(!isSoundOn)}>{isSoundOn ? <Volume2 /> : <VolumeX />} Sound</Button>
+                <div className="absolute bottom-4 left-4 right-4 flex justify-between gap-10">
+                    <Button className="flex-1" onClick={restartQuiz}><RotateCcw />Restart Quiz</Button>
+                    <Button className="flex-1" onClick={() => setShowLeaderboard(true)}><Trophy /> Leaderboard</Button>
+                    <Button className="flex-1" onClick={() => setShowQuestionForm(true)}><MessageSquarePlus /> Post a Question</Button>
+                    <Button className="flex-1" onClick={() => setShowChallengeForm(true)}><Share2 /> Challenge Friends</Button>
+                    <Button className="flex-1" onClick={() => setIsSoundOn(!isSoundOn)}>{isSoundOn ? <Volume2 /> : <VolumeX />} Sound</Button>
                 </div>
+
 
                 {showQuestionForm && <QuestionForm onClose={() => setShowQuestionForm(false)} onSubmit={handleQuestionSubmit} />}
                 {showChallengeForm && <ChallengeFriendsForm onClose={() => setShowChallengeForm(false)} onSubmit={handleChallengeFriends} />}
